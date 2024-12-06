@@ -12,11 +12,8 @@ const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const { photoapp_s3, s3_bucket_name, s3_region_name } = require('./photoapp_s3.js');
 
 require('dotenv').config();
-const { OpenAIApi } = require('openai');
-
-const openai = new OpenAIApi({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const OpenAI = require("openai");
+const openai = new OpenAI();
 
 
 function query_database(db, sql, params)
@@ -54,16 +51,18 @@ exports.get_image = async (req, res) => {
 
   console.log("**Call to get /image/:assetid...");
   
-  try {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: "What is the meaning of life?",
-      max_tokens: 100,
-    });
-    console.log(response.data.choices[0].text);
-  } catch (error) {
-    console.error("Error with OpenAI API:", error.message);
-  }
+  const completion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+        {"role": "user", "content": "write a haiku about ai"}
+      ]
+  });
+
+  // Extract the generated text
+  const haiku = completion.choices[0].message.content;
+
+  console.log("Generated Haiku:", haiku);
+
 
   try {
     assetid = req.params.assetid
