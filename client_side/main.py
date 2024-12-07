@@ -22,11 +22,11 @@ import os
 import base64
 import time
 import numpy as np
-from scipy.signal import convolve2d
-import cv2
-import matplotlib.pyplot as plt
+from scipy.ndimage import convolve
 from configparser import ConfigParser
-from ultralytics import YOLO
+from PIL import Image
+from io import BytesIO
+
 
 
 # doesn't work in docker (not easily):
@@ -226,6 +226,7 @@ def prompt():
     print("   6 => bucket contents")
     print("   7 => add user")
     print("   8 => upload")
+    print("   11 => project function 3")
 
     cmd = int(input())
     return cmd
@@ -775,6 +776,88 @@ def upload(baseurl):
     logging.error(e)
     return
 
+def project_function_3(baseurl):
+  try:
+    print("Enter asset id>")
+    assetid = input()
+    api = '/image'
+    url = baseurl + api + '/' + assetid
+    res = web_service_get(url)
+    if res.status_code != 200:
+      # failed:
+      if res.status_code in [400, 500]:  # we'll have an error message
+        body = res.json()
+        print(body["message"])
+      return
+
+    body = res.json()
+
+    userid = body["user_id"]
+    assetname = body["asset_name"] 
+    bucketkey = body["bucket_key"]
+    bytes = base64.b64decode(body["data"])
+
+    print("userid:", userid)
+    print("asset name:", assetname)
+    print("bucket key:", bucketkey)
+    image = Image.open(BytesIO(bytes))
+    image_array = np.array(image)
+    filters = {
+      "smoothing": np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) / 9,  # Average filter
+      "edge_detection": np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]]),  # Laplacian kernel
+      "sharpening": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])  # Sharpening kernel
+    }
+    print("Enter one of the three following filters: smoothing, edge_detection, sharpening>")
+    filter = input()
+    kernel = filters[filter]
+    filtered_channels = [convolve(image_array[:, :, i], kernel) for i in range(3)]
+    filtered_image = np.stack(filtered_channels, axis=-1).clip(0, 255).astype("uint8")
+    output_image = Image.fromarray(filtered_image)
+    buffer = BytesIO()
+    output_image.save(buffer, format="PNG")  # You can use "JPEG" or other formats
+    filtered_image_bytes = buffer.getvalue()
+    file_name = filter + "_filtered_" + assetname
+    outfile = open(file_name, "wb")
+    outfile.write(filtered_image_bytes)
+    print("Downloaded from S3, filtered, and saved as '", file_name, "'")
+
+    data = base64.b64encode(filtered_image_bytes)
+    datastr = data.decode()
+
+    data = {"assetname": file_name, "data": datastr}
+    #
+    # call the web service:
+    #
+    api = '/image'
+    url = baseurl + api + "/" + str(userid)
+    res2 = web_service_post(url, data)
+
+
+    #
+    # let's look at what we got back:
+    #
+    if res2.status_code != 200:
+      # failed:
+      print("Failed with status code:", res2.status_code)
+      print("url: " + url)
+      if res2.status_code in [400, 500]:  # we'll have an error message
+        body2 = res2.json()
+        print("Error message:", body2["message"])
+      #
+      return
+
+    body2 = res2.json()
+
+    assetid2 = body2["assetid"]
+
+    print("Filtered image uploaded, asset id = ", assetid2)
+    
+  except Exception as e:
+    logging.error("project_function_3() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+
 
 #########################################################################
 # main
@@ -861,6 +944,8 @@ while cmd != 0:
   #
   elif cmd == 8:
     upload(baseurl)
+  elif cmd == 11:
+    project_function_3(baseurl)
   else:
     print("** Unknown command, try again...")
   #
