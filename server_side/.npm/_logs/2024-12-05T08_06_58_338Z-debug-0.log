@@ -1,0 +1,18 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.9.0
+2 info using node@v22.12.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/user/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm list express
+7 verbose argv "list" "express"
+8 verbose logfile logs-max:10 dir:/home/user/.npm/_logs/2024-12-05T08_06_58_338Z-
+9 verbose logfile /home/user/.npm/_logs/2024-12-05T08_06_58_338Z-debug-0.log
+10 silly logfile done cleaning log files
+11 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+12 verbose cwd /home/user
+13 verbose os Linux 5.15.49-linuxkit
+14 verbose node v22.12.0
+15 verbose npm  v10.9.0
+16 verbose exit 1
+17 verbose code 1

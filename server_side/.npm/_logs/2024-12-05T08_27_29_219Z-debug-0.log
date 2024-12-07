@@ -1,0 +1,41 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.9.0
+2 info using node@v22.12.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/user/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm list
+7 verbose argv "list"
+8 verbose logfile logs-max:10 dir:/home/user/.npm/_logs/2024-12-05T08_27_29_219Z-
+9 verbose logfile /home/user/.npm/_logs/2024-12-05T08_27_29_219Z-debug-0.log
+10 silly logfile done cleaning log files
+11 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+12 verbose stack Error: missing: @aws-sdk/client-s3@^3.669.0, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: @aws-sdk/credential-providers@^3.669.0, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: @types/node@^22.7.4, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: dotenv@^16.4.5, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: express@^4.21.0, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: ini@^5.0.0, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: mysql@^2.18.1, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: openai@^4.73.1, required by nodejs-express-server-app@1.0.0
+12 verbose stack missing: uuid@^10.0.0, required by nodejs-express-server-app@1.0.0
+12 verbose stack     at LS.exec (/usr/local/lib/node_modules/npm/lib/commands/ls.js:206:9)
+12 verbose stack     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:207:9)
+12 verbose stack     at async module.exports (/usr/local/lib/node_modules/npm/lib/cli/entry.js:74:5)
+13 error code ELSPROBLEMS
+14 error missing: @aws-sdk/client-s3@^3.669.0, required by nodejs-express-server-app@1.0.0
+14 error missing: @aws-sdk/credential-providers@^3.669.0, required by nodejs-express-server-app@1.0.0
+14 error missing: @types/node@^22.7.4, required by nodejs-express-server-app@1.0.0
+14 error missing: dotenv@^16.4.5, required by nodejs-express-server-app@1.0.0
+14 error missing: express@^4.21.0, required by nodejs-express-server-app@1.0.0
+14 error missing: ini@^5.0.0, required by nodejs-express-server-app@1.0.0
+14 error missing: mysql@^2.18.1, required by nodejs-express-server-app@1.0.0
+14 error missing: openai@^4.73.1, required by nodejs-express-server-app@1.0.0
+14 error missing: uuid@^10.0.0, required by nodejs-express-server-app@1.0.0
+15 verbose cwd /home/user
+16 verbose os Linux 5.15.49-linuxkit
+17 verbose node v22.12.0
+18 verbose npm  v10.9.0
+19 verbose exit 1
+20 verbose code 1
+21 error A complete log of this run can be found in: /home/user/.npm/_logs/2024-12-05T08_27_29_219Z-debug-0.log
