@@ -984,7 +984,7 @@ def project_function_3(baseurl):
     filtered_image = np.stack(filtered_channels, axis=-1).clip(0, 255).astype("uint8")
     output_image = Image.fromarray(filtered_image)
     buffer = BytesIO()
-    output_image.save(buffer, format="PNG")  # You can use "JPEG" or other formats
+    output_image.save(buffer, format="PNG")
     filtered_image_bytes = buffer.getvalue()
     file_name = filter + "_filtered_" + assetname
     outfile = open(file_name, "wb")
