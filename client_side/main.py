@@ -21,12 +21,10 @@ import sys
 import os
 import base64
 import time
-import numpy as np
-from scipy.signal import convolve2d
-import cv2
-import matplotlib.pyplot as plt
+
 from configparser import ConfigParser
-from ultralytics import YOLO
+
+
 
 
 # doesn't work in docker (not easily):
@@ -226,6 +224,9 @@ def prompt():
     print("   6 => bucket contents")
     print("   7 => add user")
     print("   8 => upload")
+    print("   9 => get image description")
+    print("   10 => play trivia with ChatGPT")
+    print("   11 => filter an image")
 
     cmd = int(input())
     return cmd
@@ -776,6 +777,236 @@ def upload(baseurl):
     return
 
 
+def trivia(baseurl):
+  """
+  Prompts the user with a trivia question from ChatGPT and checks the answer.
+  
+  Parameters
+  ----------
+  baseurl: baseurl for web service
+  
+  Returns
+  -------
+  nothing
+  """
+
+  try:
+    #
+    # call the web service:
+    #
+    api = '/trivia'
+    url = baseurl + api
+
+    res = web_service_get(url)
+
+    #
+    # let's look at what we got back:
+    #
+    if res.status_code != 200:
+      # failed:
+      print("Failed with status code:", res.status_code)
+      print("url: " + url)
+      if res.status_code in [400, 500]:  # we'll have an error message
+        body = res.json()
+        print("Error message:", body["message"])
+      #
+      return
+
+    #
+    # deserialize and extract question:
+    #
+    body = res.json()
+    question = body["question"]
+
+    print("Trivia question:", question)
+    print("Enter your answer>")
+    user_answer = input().strip().lower()
+
+    #
+    # call ChatGPT to get the correct answer:
+    #
+    api = '/trivia/answer'
+    url = baseurl + api
+    data = {"question": question, "user_answer": user_answer}
+
+    res = web_service_post(url, data)
+
+    if res.status_code != 200:
+      # failed:
+      print("Failed with status code:", res.status_code)
+      print("url: " + url)
+      if res.status_code in [400, 500]:  # we'll have an error message
+        body = res.json()
+        print("Error message:", body["message"])
+      #
+      return
+
+    #
+    # success, extract result:
+    #
+    body = res.json()
+    correct_answer = body["correct_answer"]
+    result = body["result"]
+
+    if result:
+      print("Correct! The answer is:", correct_answer)
+    else:
+      print("Incorrect. The correct answer is:", correct_answer)
+
+  except Exception as e:
+    logging.error("trivia() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+  
+
+def describe_image(baseurl, display=False):
+  
+  """
+  Prompts the user for an asset id, and downloads
+  that asset (image) from the bucket. Displays the
+  image after download if display param is True.
+  
+  Parameters
+  ----------
+  baseurl: baseurl for web service,
+  display: optional param controlling display of image
+  
+  Returns
+  -------
+  nothing
+  """
+
+  try:
+    print("Enter asset id>")
+    assetid = input()
+
+    #
+    # call the web service:
+    #
+    api = '/project_function_1'
+    url = baseurl + api + '/' + assetid
+
+    # res = requests.get(url)
+    res = web_service_get(url)
+
+    #
+    # let's look at what we got back:
+    #
+    if res.status_code != 200:
+      # failed:
+      if res.status_code in [400, 500]:  # we'll have an error message
+        body = res.json()
+        print(body["message"])
+      #
+      return
+
+    #
+    # deserialize and extract image:
+    #
+    body = res.json()
+
+    #
+    # TODO:
+    #
+    image_description = body["image_description"]
+    assetname = body["asset_name"] 
+
+    print("image description:", image_description)
+
+    assetname = os.path.splitext(assetname)[0] + '.txt'
+
+    # Open the file in write mode (text mode)
+    outfile = open(assetname, "w")
+
+    # Write the description to the file
+    outfile.write(image_description)
+
+    # Close the file after writing
+    outfile.close()
+
+    # Print a confirmation message
+    print("Image description saved as '", assetname, "'")
+    #
+    # display image if requested:
+    #
+    if display:
+      print('Oops...')
+      print('Docker is not setup to display images, see if you can open and view locally...')
+      print('Oops...')
+      # image = img.imread(assetname)
+      # plt.imshow(image)
+      # plt.show()
+
+  except Exception as e:
+    logging.error("describe_image() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+  
+def filter_image(baseurl):
+  try:
+    print("Enter asset id>")
+    assetid = input()
+    print("Enter one of the three following filters: smoothing, edge_detection, sharpening>")
+    filter = input()
+    api = '/project_function_3'
+    url = baseurl + api + '/' + assetid + '/' + filter
+    res = web_service_get(url)
+    if res.status_code != 200:
+      # failed:
+      if res.status_code in [400, 500]:  # we'll have an error message
+        body = res.json()
+        print(body["message"])
+      return
+
+    body = res.json()
+
+    userid = body["user_id"]
+    assetname = body["asset_name"] 
+    bucketkey = body["bucket_key"]
+    bytes = base64.b64decode(body["data"])
+
+    print("userid:", userid)
+    print("asset name:", assetname)
+    print("bucket key:", bucketkey)
+    
+    file_name = filter + "_filtered_" + assetname
+    outfile = open(file_name, "wb")
+    outfile.write(bytes)
+    print("Downloaded from S3, filtered, and saved as '", file_name, "'")
+    data = {"assetname": file_name, "data": body["data"]}
+    #
+    # call the web service:
+    #
+    api = '/image'
+    url = baseurl + api + "/" + str(userid)
+    res2 = web_service_post(url, data)
+    #
+    # let's look at what we got back:
+    #
+    if res2.status_code != 200:
+      # failed:
+      print("Failed with status code:", res2.status_code)
+      print("url: " + url)
+      if res2.status_code in [400, 500]:  # we'll have an error message
+        body2 = res2.json()
+        print("Error message:", body2["message"])
+      #
+      return
+
+    body2 = res2.json()
+
+    assetid2 = body2["assetid"]
+
+    print("Filtered image uploaded, asset id = ", assetid2)
+    
+  except Exception as e:
+    logging.error("project_function_3() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+
 #########################################################################
 # main
 #
@@ -791,7 +1022,7 @@ sys.tracebacklimit = 0
 config_file = 'photoapp-client-config.ini'
 
 print("What config file to use for this session?")
-print("Press ENTER to use default (photoapp-client-config.ini),")
+print("Press ENTER to use default (photoapp-client-config.ini) for local host, or ec2-client-config.ini for ec2 server")
 print("otherwise enter name of config file>")
 s = input()
 
@@ -854,13 +1085,14 @@ while cmd != 0:
     bucket_contents(baseurl)
   elif cmd == 7:
     add_user(baseurl)
-  #
-  #
-  # TODO: add calls to command functions for 4 - 7
-  #
-  #
   elif cmd == 8:
     upload(baseurl)
+  elif cmd == 9:
+    describe_image(baseurl)
+  elif cmd == 10:
+    trivia(baseurl)
+  elif cmd == 11:
+    filter_image(baseurl)
   else:
     print("** Unknown command, try again...")
   #
