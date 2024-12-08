@@ -19,9 +19,6 @@ RUN useradd -m -s /bin/bash user
 RUN pip3 install --upgrade pip setuptools
 RUN pip3 install requests
 RUN pip3 install jsons
-RUN pip3 install numpy
-RUN pip3 install scipy
-RUN pip3 install Pillow
 
 # Switch to the non-root user:
 USER user

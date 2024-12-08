@@ -21,11 +21,9 @@ import sys
 import os
 import base64
 import time
-import numpy as np
-from scipy.ndimage import convolve
+
 from configparser import ConfigParser
-from PIL import Image
-from io import BytesIO
+
 
 
 
@@ -946,12 +944,14 @@ def describe_image(baseurl, display=False):
     logging.error(e)
     return
   
-def project_function_3(baseurl):
+def filter_image(baseurl):
   try:
     print("Enter asset id>")
     assetid = input()
-    api = '/image'
-    url = baseurl + api + '/' + assetid
+    print("Enter one of the three following filters: smoothing, edge_detection, sharpening>")
+    filter = input()
+    api = '/project_function_3'
+    url = baseurl + api + '/' + assetid + '/' + filter
     res = web_service_get(url)
     if res.status_code != 200:
       # failed:
@@ -970,39 +970,18 @@ def project_function_3(baseurl):
     print("userid:", userid)
     print("asset name:", assetname)
     print("bucket key:", bucketkey)
-    image = Image.open(BytesIO(bytes))
-    image_array = np.array(image)
-    filters = {
-      "smoothing": np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) / 9,  # Average filter
-      "edge_detection": np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]]),  # Laplacian kernel
-      "sharpening": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])  # Sharpening kernel
-    }
-    print("Enter one of the three following filters: smoothing, edge_detection, sharpening>")
-    filter = input()
-    kernel = filters[filter]
-    filtered_channels = [convolve(image_array[:, :, i], kernel) for i in range(3)]
-    filtered_image = np.stack(filtered_channels, axis=-1).clip(0, 255).astype("uint8")
-    output_image = Image.fromarray(filtered_image)
-    buffer = BytesIO()
-    output_image.save(buffer, format="PNG")
-    filtered_image_bytes = buffer.getvalue()
+    
     file_name = filter + "_filtered_" + assetname
     outfile = open(file_name, "wb")
-    outfile.write(filtered_image_bytes)
+    outfile.write(bytes)
     print("Downloaded from S3, filtered, and saved as '", file_name, "'")
-
-    data = base64.b64encode(filtered_image_bytes)
-    datastr = data.decode()
-
-    data = {"assetname": file_name, "data": datastr}
+    data = {"assetname": file_name, "data": body["data"]}
     #
     # call the web service:
     #
     api = '/image'
     url = baseurl + api + "/" + str(userid)
     res2 = web_service_post(url, data)
-
-
     #
     # let's look at what we got back:
     #
@@ -1043,7 +1022,7 @@ sys.tracebacklimit = 0
 config_file = 'photoapp-client-config.ini'
 
 print("What config file to use for this session?")
-print("Press ENTER to use default (photoapp-client-config.ini),")
+print("Press ENTER to use default (photoapp-client-config.ini) for local host, or ec2-client-config.ini for ec2 server")
 print("otherwise enter name of config file>")
 s = input()
 
@@ -1113,7 +1092,7 @@ while cmd != 0:
   elif cmd == 10:
     trivia(baseurl)
   elif cmd == 11:
-    project_function_3(baseurl)
+    filter_image(baseurl)
   else:
     print("** Unknown command, try again...")
   #
