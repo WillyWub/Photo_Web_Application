@@ -4,8 +4,9 @@
 // simple photo application for photo storage and viewing.
 //
 // Authors:
-//  YOUR NAME
+//  Andrew Yang 
 //  Wilson Ting
+//  William Zhong
 //  Northwestern University
 //
 // References:
@@ -82,6 +83,7 @@ let download = require('./api_image_get.js');
 let user = require('./api_user.js');
 let upload = require('./api_image_post.js');
 let trivia = require('./api_project_function_2.js');
+let project_function_1 = require('./api_project_function_1.js');
 
 app.get('/stats', stats.get_stats);  
 app.get('/users', users.get_users);  
@@ -90,7 +92,10 @@ app.get('/bucket', bucket.get_bucket);
 app.get('/image/:assetid', download.get_image);
 app.get('/trivia', trivia.get_trivia);
 app.post('/trivia/answer', trivia.check_answer);
+app.get('/project_function_1/:assetid', project_function_1.get_image);
+
 
 app.put('/user', user.put_user);
 
 app.post('/image/:userid', upload.post_image);
+

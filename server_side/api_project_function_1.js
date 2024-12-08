@@ -50,18 +50,6 @@ function query_database(db, sql, params)
 exports.get_image = async (req, res) => {
 
   console.log("**Call to get /image/:assetid...");
-  
-  const completion = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-        {"role": "user", "content": "write a haiku about ai"}
-      ]
-  });
-
-  // Extract the generated text
-  const haiku = completion.choices[0].message.content;
-
-  console.log("Generated Haiku:", haiku);
 
 
   try {
@@ -113,6 +101,36 @@ exports.get_image = async (req, res) => {
     let s3_promise = await photoapp_s3.send(command)
     var datastr = await s3_promise.Body.transformToString("base64");
 
+    const completion = await openai.chat.completions.create({
+      //model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
+      messages: [
+          {"role": "user", 
+          //"content": "write a haiku about ai",
+          "content": [
+          {
+            "type": "text",
+            "text": "What is in this image? Please keep the response under 20 words.",
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": `data:image/jpeg;base64,${datastr}`
+            },
+          },
+        ],
+          
+        
+        }
+        ]
+    });
+  
+    // Extract the generated text
+    //const haiku = completion.choices[0].message.content;
+    const image_description = completion.choices[0].message.content;
+  
+    console.log("Image Description:", image_description);
+
     //
     // TODO
     //
@@ -131,6 +149,7 @@ exports.get_image = async (req, res) => {
       "user_id": result[0].userid,
       "asset_name": result[0].assetname,
       "bucket_key": result[0].bucketkey,
+      "image_description": image_description,
       "data": datastr
     });
 
@@ -144,6 +163,7 @@ exports.get_image = async (req, res) => {
       "user_id": -1,
       "asset_name": "?",
       "bucket_key": "?",
+      "image_description": image_description,
       "data": []
     });
   }//catch

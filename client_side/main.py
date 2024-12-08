@@ -225,7 +225,8 @@ def prompt():
     print("   6 => bucket contents")
     print("   7 => add user")
     print("   8 => upload")
-    print("   9 => trivia")
+    print("   9 => describe an image")
+    print("   10 => trivia")
 
     cmd = int(input())
     return cmd
@@ -857,6 +858,91 @@ def trivia(baseurl):
     logging.error("url: " + url)
     logging.error(e)
     return
+  
+
+def describe_image(baseurl, display=False):
+  
+  """
+  Prompts the user for an asset id, and downloads
+  that asset (image) from the bucket. Displays the
+  image after download if display param is True.
+  
+  Parameters
+  ----------
+  baseurl: baseurl for web service,
+  display: optional param controlling display of image
+  
+  Returns
+  -------
+  nothing
+  """
+
+  try:
+    print("Enter asset id>")
+    assetid = input()
+
+    #
+    # call the web service:
+    #
+    api = '/project_function_1'
+    url = baseurl + api + '/' + assetid
+
+    # res = requests.get(url)
+    res = web_service_get(url)
+
+    #
+    # let's look at what we got back:
+    #
+    if res.status_code != 200:
+      # failed:
+      if res.status_code in [400, 500]:  # we'll have an error message
+        body = res.json()
+        print(body["message"])
+      #
+      return
+
+    #
+    # deserialize and extract image:
+    #
+    body = res.json()
+
+    #
+    # TODO:
+    #
+    image_description = body["image_description"]
+    assetname = body["asset_name"] 
+
+    print("image description:", image_description)
+
+    assetname = os.path.splitext(assetname)[0] + '.txt'
+
+    # Open the file in write mode (text mode)
+    outfile = open(assetname, "w")
+
+    # Write the description to the file
+    outfile.write(image_description)
+
+    # Close the file after writing
+    outfile.close()
+
+    # Print a confirmation message
+    print("Image description saved as '", assetname, "'")
+    #
+    # display image if requested:
+    #
+    if display:
+      print('Oops...')
+      print('Docker is not setup to display images, see if you can open and view locally...')
+      print('Oops...')
+      # image = img.imread(assetname)
+      # plt.imshow(image)
+      # plt.show()
+
+  except Exception as e:
+    logging.error("describe_image() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
 
 #########################################################################
 # main
@@ -939,6 +1025,8 @@ while cmd != 0:
   elif cmd == 8:
     upload(baseurl)
   elif cmd == 9:
+    describe_image(baseurl)
+  elif cmd == 10:
     trivia(baseurl)
   else:
     print("** Unknown command, try again...")
